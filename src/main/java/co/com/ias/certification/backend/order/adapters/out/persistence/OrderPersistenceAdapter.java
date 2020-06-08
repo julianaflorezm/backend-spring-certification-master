@@ -39,18 +39,18 @@ public class OrderPersistenceAdapter implements CreateOrderPort, DeleteOrderPort
     @Override
     public Try<List<Object>> createOrder(List<ProductId> products, OrderNotCreated order) {
         return Try.of(() -> {
-
             List<Object> completeOrder = new ArrayList<>();
-
             OrderJpaEntity orderJpaEntity = orderMapper.mapToJpaEntity(order);
             OrderJpaEntity orderCreatedJpa = orderRepository.save(orderJpaEntity);
             Order orderCreated = orderMapper.mapToDomainEntity(orderCreatedJpa);
-
             List<Product> productsList = new ArrayList<>();
             for (ProductId productId:
                  products) {
                 Optional<ProductJpaEntity> currentProduct = productRepository.findById(productId.getValue());
-                Product product = productMapper.mapToDomainEntity(currentProduct.get());
+                Product product = currentProduct.map(productMapper::mapToDomainEntity).orElseThrow(() -> {
+                    deleteOrder(orderCreated.getId());
+                    return new NullPointerException("Some product was not Found");
+                });
                 OrderProductsNotCreated orderProducts = new OrderProductsNotCreated(orderCreated.getId(), productId);
                 OrderProductsJpaEntity orderProductsJpaEntity = orderProductsMapper.mapToJpaEntity(orderProducts);
                 orderProductsRepository.save(orderProductsJpaEntity);
@@ -63,7 +63,7 @@ public class OrderPersistenceAdapter implements CreateOrderPort, DeleteOrderPort
     }
 
     @Override
-    public Try<List<Object>> deleteOrder(ProductId id) {
+    public Try<List<Object>> deleteOrder(OrderId id) {
         return Try.of(() -> {
             Long orderId = id.getValue();
             Optional<OrderJpaEntity> currentOrder = orderRepository.findById(orderId);
@@ -94,15 +94,7 @@ public class OrderPersistenceAdapter implements CreateOrderPort, DeleteOrderPort
             Optional<OrderJpaEntity> currentOrder = orderRepository.findById(id.getValue());
             List<Object> completeOrder = new ArrayList<>();
             return currentOrder.map(jpaOrder -> {
-                Iterable<OrderProductsJpaEntity> orderProductsList = orderProductsRepository.findAll();
-                List<Product> productsList = new ArrayList<>();
-                orderProductsList.forEach(orderProductsJpa -> {
-                    if(orderProductsJpa.getIdOrder() == currentOrder.get().getId()){
-                        Optional<ProductJpaEntity> productJpaEntity = productRepository.findById(orderProductsJpa.getIdProduct());
-                        Product product = productMapper.mapToDomainEntity(productJpaEntity.get());
-                        productsList.add(product);
-                    }
-                });
+                List<Product> productsList = getProducts(currentOrder.get().getId());
                 Order order = orderMapper.mapToDomainEntity(jpaOrder);
                 completeOrder.add(productsList);
                 completeOrder.add(order);
@@ -112,6 +104,20 @@ public class OrderPersistenceAdapter implements CreateOrderPort, DeleteOrderPort
         });
     }
 
+    public List<Product> getProducts(Long id){
+        Iterable<OrderProductsJpaEntity> orderProductsList = orderProductsRepository.findAll();
+        List<Product> productsList = new ArrayList<>();
+        orderProductsList.forEach(orderProductsJpa -> {
+            if(orderProductsJpa.getIdOrder() == id){
+                Optional<ProductJpaEntity> productJpaEntity = productRepository.findById(orderProductsJpa.getIdProduct());
+                productJpaEntity.map(productMapper::mapToDomainEntity).orElseThrow(() -> new NullPointerException("Product not Found"));
+                Product product = productMapper.mapToDomainEntity(productJpaEntity.get());
+                productsList.add(product);
+            }
+        });
+        return productsList;
+    }
+
     @Override
     public Try<List<Object>> updateOrder(OrderId id, OrderStatus status) {
         return Try.of(() -> {
@@ -119,16 +125,7 @@ public class OrderPersistenceAdapter implements CreateOrderPort, DeleteOrderPort
             Optional<OrderJpaEntity> currentOrder = orderRepository.findById(orderId);
             List<Object> completeUpdated = new ArrayList<>();
             return currentOrder.map(jpaOrder -> {
-                        Iterable<OrderProductsJpaEntity> orderProductsList = orderProductsRepository.findAll();
-                        List<Product> productsList = new ArrayList<>();
-                        orderProductsList.forEach(orderProductsJpa -> {
-                            if(orderProductsJpa.getIdOrder() == currentOrder.get().getId()){
-                                Optional<ProductJpaEntity> productJpaEntity = productRepository.findById(orderProductsJpa.getIdProduct());
-                                Product product = productMapper.mapToDomainEntity(productJpaEntity.get());
-                                productsList.add(product);
-                            }
-                        });
-
+                        List<Product> productsList = getProducts(currentOrder.get().getId());
                         jpaOrder.setStatus(status.name());
                         OrderJpaEntity updatedOrder =  orderRepository.save(jpaOrder);
                         Order order = orderMapper.mapToDomainEntity(updatedOrder);
@@ -145,18 +142,7 @@ public class OrderPersistenceAdapter implements CreateOrderPort, DeleteOrderPort
         Iterable<OrderJpaEntity> jpaOrders = orderRepository.findAll();
         jpaOrders.forEach(jpaEntity -> {
             Order order = orderMapper.mapToDomainEntity(jpaEntity);
-
-            Iterable<OrderProductsJpaEntity> orderProductsList = orderProductsRepository.findAll();
-            List<Product> productsList = new ArrayList<>();
-            orderProductsList.forEach(orderProductsJpa -> {
-                if(orderProductsJpa.getIdOrder() == jpaEntity.getId()){
-                    Optional<ProductJpaEntity> productJpaEntity = productRepository.findById(orderProductsJpa.getIdProduct());
-                    Product product = productMapper.mapToDomainEntity(productJpaEntity.get());
-                    productsList.add(product);
-
-                }
-            });
-
+            List<Product> productsList = getProducts(jpaEntity.getId());
             List<Object> response = new ArrayList<>();
             response.add(productsList);
             response.add(order);
