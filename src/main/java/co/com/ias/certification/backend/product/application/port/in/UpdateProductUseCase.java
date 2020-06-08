@@ -1,0 +1,17 @@
+package co.com.ias.certification.backend.product.application.port.in;
+
+import co.com.ias.certification.backend.product.application.domain.Product;
+import co.com.ias.certification.backend.product.application.domain.ProductId;
+import co.com.ias.certification.backend.product.application.domain.ProductNotCreated;
+import io.vavr.control.Try;
+import lombok.Value;
+
+public interface UpdateProductUseCase {
+    Try<Product> updateProduct(UpdateProductCommand command);
+
+    @Value(staticConstructor = "of")
+    class UpdateProductCommand{
+        ProductId id;
+        ProductNotCreated product;
+    }
+}
