@@ -1,6 +1,7 @@
 package co.com.ias.certification.backend.order.adapters.out.persistence.orderProducts;
 
 
+import co.com.ias.certification.backend.order.adapters.out.persistence.order.OrderJpaEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,9 +20,10 @@ public class OrderProductsJpaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column
-    Long idOrder;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    OrderJpaEntity order;
 
     @Column
-    Long idProduct;
+    Long productId;
 }

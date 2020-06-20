@@ -6,6 +6,7 @@ import co.com.ias.certification.backend.order.application.port.out.DeleteOrderPo
 import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Collection;
 import java.util.List;
 
 @UseCase
@@ -17,5 +18,17 @@ public class DeleteOrderService implements DeleteOrderUseCase {
     @Override
     public Try<List<Object>> deleteOrder(DeleteOrderCommand command) {
         return deleteOrderPort.deleteOrder(command.getId()) ;
+    }
+
+    @Override
+    public Try<Boolean> userHasPermission(Collection authorities) {
+        return Try.of(() -> {
+            for(Object role : authorities){
+                if(role.toString().equals("KeycloakRole{role='ADMIN'}")){
+                    return true;
+                }
+            }
+            return false;
+        });
     }
 }

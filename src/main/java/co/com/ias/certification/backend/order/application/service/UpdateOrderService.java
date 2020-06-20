@@ -6,6 +6,7 @@ import co.com.ias.certification.backend.order.application.port.out.UpdateOrderPo
 import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Collection;
 import java.util.List;
 
 @UseCase
@@ -15,5 +16,17 @@ public class UpdateOrderService implements UpdateOrderUseCase {
     @Override
     public Try<List<Object>> updateOrder(UpdateOrderCommand command) {
         return updateOrderPort.updateOrder(command.getId(), command.getStatus());
+    }
+
+    @Override
+    public Try<Boolean> userHasPermission(Collection authorities) {
+        return Try.of(() -> {
+            for(Object role : authorities){
+                if(role.toString().equals("KeycloakRole{role='ADMIN'}") || role.toString().equals("KeycloakRole{role='EMPLOYEE'}")){
+                    return true;
+                }
+            }
+            return false;
+        });
     }
 }

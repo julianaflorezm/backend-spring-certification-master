@@ -1,12 +1,11 @@
 package co.com.ias.certification.backend.order.adapters.out.persistence.order;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import co.com.ias.certification.backend.order.adapters.out.persistence.orderProducts.OrderProductsJpaEntity;
+import lombok.*;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Entity
 @Table(name = "ORDERS")
@@ -30,4 +29,9 @@ public class OrderJpaEntity {
 
     @Column
     String status;
+
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "order", cascade = CascadeType.ALL)
+    @Singular
+    List<OrderProductsJpaEntity> orderProducts;
 }

@@ -1,12 +1,11 @@
 package co.com.ias.certification.backend.product.adapters.out.persistence;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import co.com.ias.certification.backend.product.adapters.out.storage.ImageJpaEntity;
+import lombok.*;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Entity
 @Table(name = "PRODUCTS")
@@ -36,4 +35,8 @@ public class ProductJpaEntity {
 
     @Column
     Integer inventoryQuantity;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "product", cascade = CascadeType.ALL)
+    @Singular
+    List<ImageJpaEntity> images;
 }

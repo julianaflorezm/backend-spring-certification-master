@@ -2,12 +2,9 @@ package co.com.ias.certification.backend.product.adapters.out.persistence;
 
 import co.com.ias.certification.backend.common.PersistenceAdapter;
 import co.com.ias.certification.backend.product.adapters.out.storage.ImageJpaEntity;
-import co.com.ias.certification.backend.product.adapters.out.storage.ImageMapper;
-import co.com.ias.certification.backend.product.adapters.out.storage.ImageRepository;
 import co.com.ias.certification.backend.product.application.domain.Product;
 import co.com.ias.certification.backend.product.application.domain.ProductId;
 import co.com.ias.certification.backend.product.application.domain.ProductNotCreated;
-import co.com.ias.certification.backend.product.application.domain.image.ProductImage;
 import co.com.ias.certification.backend.product.application.port.out.*;
 import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
@@ -27,9 +24,6 @@ public class ProductPersistenceAdapter implements CreateProductPort, UpdateProdu
 {
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
-    private final ImageRepository imageRepository;
-    private final ImageMapper imageMapper;
-
 
     @Override
     public Try<Product> createProduct(ProductNotCreated product) {
@@ -79,9 +73,9 @@ public class ProductPersistenceAdapter implements CreateProductPort, UpdateProdu
         return Try.of(() -> {
             Long productId = id.getValue();
             Optional<ProductJpaEntity> currentProduct = productRepository.findById(productId);
-            List<Resource> images = getImage(id);
             Product product = currentProduct.map(productMapper::mapToDomainEntity)
                     .orElseThrow(() -> new NullPointerException("Product not found"));
+            List<Resource> images = getImage(currentProduct.get().getImages());
             List<Object> response = new ArrayList<>();
             response.add(images);
             response.add(product);
@@ -91,13 +85,10 @@ public class ProductPersistenceAdapter implements CreateProductPort, UpdateProdu
 
 
 
-    public List<Resource> getImage(ProductId id) {
+    public List<Resource> getImage(List<ImageJpaEntity> list) {
         List<Resource> images = new ArrayList<>();
-        Iterable<ImageJpaEntity> list = imageRepository.findAll();
         list.forEach(jpaImage -> {
-            ProductImage productImage = imageMapper.mapToDomainEntity(jpaImage);
-            if(productImage.getProductId().equals(id)){
-                Path path = Paths.get("src\\main\\java\\co\\com\\ias\\certification\\backend\\uploads\\").resolve(productImage.getName().getValue()).toAbsolutePath();
+                Path path = Paths.get("src\\main\\java\\co\\com\\ias\\certification\\backend\\uploads\\").resolve(jpaImage.getName()).toAbsolutePath();
                 try {
                     Resource resource = new UrlResource(path.toUri());
                     if(resource.exists()){
@@ -106,7 +97,6 @@ public class ProductPersistenceAdapter implements CreateProductPort, UpdateProdu
                 } catch (MalformedURLException e) {
                     e.printStackTrace();
                 }
-            }
         });
         return images;
     }
@@ -117,7 +107,7 @@ public class ProductPersistenceAdapter implements CreateProductPort, UpdateProdu
         Iterable<ProductJpaEntity> list = productRepository.findAll();
         list.forEach(jpaProduct -> {
             Product product = productMapper.mapToDomainEntity(jpaProduct);
-            List<Resource> images = getImage(product.getId());
+            List<Resource> images = getImage(jpaProduct.getImages());
             List<Object> response = new ArrayList<>();
             response.add(images);
             response.add(product);

@@ -9,6 +9,8 @@ import co.com.ias.certification.backend.product.application.port.out.UpdateProdu
 import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Collection;
+
 @UseCase
 @RequiredArgsConstructor
 public class UpdateProductService implements UpdateProductUseCase {
@@ -20,6 +22,18 @@ public class UpdateProductService implements UpdateProductUseCase {
         ProductId id = command.getId();
         ProductNotCreated product = command.getProduct();
         return updateProductPort.updateProduct(id, product);
+    }
+
+    @Override
+    public Try<Boolean> userHasPermission(Collection authorities) {
+        return Try.of(() -> {
+            for(Object role : authorities){
+                if(role.toString().equals("KeycloakRole{role='ADMIN'}") || role.toString().equals("KeycloakRole{role='EMPLOYEE'}")){
+                    return true;
+                }
+            }
+            return false;
+        });
     }
 
 

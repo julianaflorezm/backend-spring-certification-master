@@ -6,8 +6,12 @@ import co.com.ias.certification.backend.product.application.domain.ProductNotCre
 import io.vavr.control.Try;
 import lombok.Value;
 
+import java.util.Collection;
+
 public interface UpdateProductUseCase {
     Try<Product> updateProduct(UpdateProductCommand command);
+
+    Try<Boolean> userHasPermission(Collection authorities);
 
     @Value(staticConstructor = "of")
     class UpdateProductCommand{

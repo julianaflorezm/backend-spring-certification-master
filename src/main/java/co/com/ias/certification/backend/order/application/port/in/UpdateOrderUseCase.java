@@ -5,10 +5,13 @@ import co.com.ias.certification.backend.order.application.domain.OrderStatus;
 import io.vavr.control.Try;
 import lombok.Value;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface UpdateOrderUseCase {
     Try<List<Object>> updateOrder(UpdateOrderCommand command);
+
+    Try<Boolean> userHasPermission(Collection authorities);
 
     @Value(staticConstructor = "of")
     class UpdateOrderCommand{

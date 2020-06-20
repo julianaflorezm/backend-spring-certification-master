@@ -4,3 +4,10 @@ spring:
 
 server:
   port: 8081
+
+keycloak:
+  auth-server-url: http://localhost:8090/auth
+  realm: orders
+  resource: backend
+  credentials:
+    secret: 5a7e0e42-2018-4413-8514-86f485773eed

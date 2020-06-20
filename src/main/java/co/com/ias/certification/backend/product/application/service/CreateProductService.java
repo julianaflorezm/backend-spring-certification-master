@@ -8,6 +8,8 @@ import co.com.ias.certification.backend.product.application.port.out.CreateProdu
 import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Collection;
+
 @UseCase
 @RequiredArgsConstructor
 public class CreateProductService implements CreateProductUseCase {
@@ -18,5 +20,17 @@ public class CreateProductService implements CreateProductUseCase {
     public Try<Product> createProduct(CreateProductCommand command) {
         ProductNotCreated product = command.getProduct();
         return createProductPort.createProduct(product);
+    }
+
+    @Override
+    public Try<Boolean> userHasPermission(Collection authorities) {
+        return Try.of(() -> {
+            for(Object role : authorities){
+                if(role.toString().equals("KeycloakRole{role='ADMIN'}") || role.toString().equals("KeycloakRole{role='EMPLOYEE'}")){
+                    return true;
+                }
+            }
+            return false;
+        });
     }
 }

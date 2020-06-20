@@ -7,6 +7,7 @@ import co.com.ias.certification.backend.product.application.port.out.FindProduct
 import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Collection;
 import java.util.List;
 
 @UseCase
@@ -17,5 +18,17 @@ public class FindProductService implements FindProductUseCase {
     public Try<List<Object>> findProduct(FindProductQuery query) {
         ProductId id = query.getId();
         return findProductPort.findProduct(id);
+    }
+
+    @Override
+    public Try<Boolean> userHasPermission(Collection authorities) {
+        return Try.of(() -> {
+            for(Object role : authorities){
+                if(role.toString().equals("KeycloakRole{role='ADMIN'}") || role.toString().equals("KeycloakRole{role='EMPLOYEE'}") || role.toString().equals("KeycloakRole{role='CUSTOMER'}")){
+                    return true;
+                }
+            }
+            return false;
+        });
     }
 }

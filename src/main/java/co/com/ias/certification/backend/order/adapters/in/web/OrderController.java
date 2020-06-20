@@ -1,12 +1,18 @@
 package co.com.ias.certification.backend.order.adapters.in.web;
 
 import co.com.ias.certification.backend.common.WebAdapter;
+import co.com.ias.certification.backend.exceptions.UserUnauthorized;
+import co.com.ias.certification.backend.order.application.domain.Customer;
 import co.com.ias.certification.backend.order.application.port.in.*;
 import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
+import org.keycloak.KeycloakPrincipal;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Collection;
 
 @RestController
 @WebAdapter
@@ -21,27 +27,59 @@ public class OrderController {
     private final FindAllOrdersUseCase findAllOrdersUseCase;
 
     @PostMapping
-    public Try<List<Object>> createOrder(@RequestBody CreateOrderUseCase.CreateOrderCommand command){
-        return createOrderUseCase.createOrder(command);
+    public ResponseEntity createOrder(@RequestBody CreateOrderUseCase.CreateOrderCommand command, Authentication authentication){
+
+        Collection authorities = authentication.getAuthorities();
+        KeycloakPrincipal principal = (KeycloakPrincipal) authentication.getPrincipal();
+        String customerName = principal.getKeycloakSecurityContext().getToken().getPreferredUsername();
+        Customer customer = Customer.of(customerName);
+        Try<Boolean> hasPermission = createOrderUseCase.userHasPermission(authorities);
+        if(hasPermission.get()){
+            return ResponseEntity.ok(createOrderUseCase.createOrder(command, customerName));
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Error:" + customer.getValue() + "unauthorized to do this action");
     }
 
     @DeleteMapping
-    public  Try<List<Object>> deleteOrder(@RequestBody DeleteOrderUseCase.DeleteOrderCommand command){
-        return deleteOrderUseCase.deleteOrder(command);
+    public  ResponseEntity deleteOrder(@RequestBody DeleteOrderUseCase.DeleteOrderCommand command, Authentication authentication){
+        Collection authorities = authentication.getAuthorities();
+        KeycloakPrincipal principal = (KeycloakPrincipal) authentication.getPrincipal();
+        String customerName = principal.getKeycloakSecurityContext().getToken().getPreferredUsername();
+        Customer customer = Customer.of(customerName);
+        Try<Boolean> hasPermission = deleteOrderUseCase.userHasPermission(authorities);
+        if(hasPermission.get()){
+            return ResponseEntity.ok(deleteOrderUseCase.deleteOrder(command));
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Try.failure(UserUnauthorized.of(customer)));
     }
 
     @GetMapping
-    public Try<List<Object>> findOrder(@RequestBody FindOrderUseCase.FindOrderQuery query){
-        return findOrderUseCase.findOrder(query);
+    public ResponseEntity findOrder(@RequestBody FindOrderUseCase.FindOrderQuery query, Authentication authentication){
+        Collection authorities = authentication.getAuthorities();
+        Try<Boolean> hasPermission = findOrderUseCase.userHasPermission(authorities);
+        if(hasPermission.get()){
+            return ResponseEntity.ok(findOrderUseCase.findOrder(query));
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Error: ser unauthorized to do this action");
     }
 
     @PutMapping
-    public Try<List<Object>> updateOrder(@RequestBody UpdateOrderUseCase.UpdateOrderCommand command){
-        return updateOrderUseCase.updateOrder(command);
+    public ResponseEntity updateOrder(@RequestBody UpdateOrderUseCase.UpdateOrderCommand command, Authentication authentication){
+        Collection authorities = authentication.getAuthorities();
+        Try<Boolean> hasPermission = updateOrderUseCase.userHasPermission(authorities);
+        if(hasPermission.get()){
+            return ResponseEntity.ok(updateOrderUseCase.updateOrder(command));
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Error: user unauthorized to do this action");
     }
 
     @GetMapping("all")
-    public List<List<Object>> findAllOrders(){
-        return findAllOrdersUseCase.findAllOrders();
+    public ResponseEntity findAllOrders(Authentication authentication){
+        Collection authorities = authentication.getAuthorities();
+        Try<Boolean> hasPermission = findAllOrdersUseCase.userHasPermission(authorities);
+        if(hasPermission.get()){
+            return ResponseEntity.ok(findAllOrdersUseCase.findAllOrders());
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Error: user unauthorized to do this action");
     }
 }

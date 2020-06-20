@@ -1,5 +1,6 @@
 package co.com.ias.certification.backend.product.adapters.out.storage;
 
+import co.com.ias.certification.backend.product.adapters.out.persistence.ProductJpaEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,8 +19,8 @@ public class ImageJpaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column
-    Long productId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    ProductJpaEntity product;
 
     @Column
     String name;

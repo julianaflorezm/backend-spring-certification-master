@@ -5,8 +5,12 @@ import io.vavr.control.Try;
 import lombok.Value;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collection;
+
 public interface UploadProductImageUseCase {
     Try<Object> uploadProductImage(UploadProductImageCommand command);
+
+    Try<Boolean> userHasPermission(Collection authorities);
 
     @Value(staticConstructor = "of")
     class UploadProductImageCommand{

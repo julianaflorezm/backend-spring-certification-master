@@ -6,6 +6,7 @@ import co.com.ias.certification.backend.order.application.port.out.CreateOrderPo
 import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Collection;
 import java.util.List;
 
 @UseCase
@@ -15,7 +16,19 @@ public class CreateOrderService implements CreateOrderUseCase {
     private final CreateOrderPort createOrderPort;
 
     @Override
-    public Try<List<Object>> createOrder(CreateOrderCommand command) {
-        return createOrderPort.createOrder(command.getProducts(), command.getOrder());
+    public Try<List<Object>> createOrder(CreateOrderCommand command, String customerName) {
+        return createOrderPort.createOrder(command.getProducts(), command.getOrder(), customerName);
+    }
+
+    @Override
+    public Try<Boolean> userHasPermission(Collection authorities) {
+        return Try.of(() -> {
+            for(Object role : authorities){
+                if(role.toString().equals("KeycloakRole{role='ADMIN'}") || role.toString().equals("KeycloakRole{role='EMPLOYEE'}") || role.toString().equals("KeycloakRole{role='CUSTOMER'}")){
+                    return true;
+                }
+            }
+            return false;
+        });
     }
 }

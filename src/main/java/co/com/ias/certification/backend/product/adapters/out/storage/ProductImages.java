@@ -38,7 +38,7 @@ public class ProductImages implements UploadProductImagePort {
                     if(!Files.exists(completeRoot)){
                         Files.copy(file.getInputStream(), completeRoot);
                         ProductImage image = new ProductImage(id, ImageName.of(file.getOriginalFilename()), Size.of(file.getSize()), ContentType.of(file.getContentType()), Extension.of(FilenameUtils.getExtension(file.getOriginalFilename())));
-                        ImageJpaEntity jpaImage = imageMapper.mapToJpaEntity(image);
+                        ImageJpaEntity jpaImage = imageMapper.mapToJpaEntity(image, jpaProduct.get());
                         imageRepository.save(jpaImage);
                         return "Success process: " + file.getOriginalFilename() + " is uploaded";
                     }else{
