@@ -10,7 +10,7 @@ import java.util.Collection;
 import java.util.List;
 
 public interface CreateOrderUseCase {
-    Try<List<Object>> createOrder(CreateOrderCommand command, String customerName);
+    Try<List<Object>> createOrder(CreateOrderCommand command, Customer customer);
 
     Try<Boolean> userHasPermission(Collection authorities);
 

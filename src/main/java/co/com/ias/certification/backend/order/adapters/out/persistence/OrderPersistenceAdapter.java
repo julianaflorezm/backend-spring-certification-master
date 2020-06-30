@@ -35,9 +35,9 @@ public class OrderPersistenceAdapter implements CreateOrderPort, DeleteOrderPort
     private final ProductMapper productMapper;
 
     @Override
-    public Try<List<Object>> createOrder(List<ProductId> products, IncompleteOrder notCompletedOrder, String customerName) {
+    public Try<List<Object>> createOrder(List<ProductId> products, IncompleteOrder notCompletedOrder, Customer customer) {
         return Try.of(() -> {
-            OrderNotCreated order = calculateDiscount(notCompletedOrder, customerName);
+            OrderNotCreated order = calculateDiscount(notCompletedOrder, customer);
             List<Object> completeOrder = new ArrayList<>();
             OrderJpaEntity orderJpaEntity = orderMapper.mapToJpaEntity(order);
             OrderJpaEntity orderCreatedJpa = orderRepository.save(orderJpaEntity);
@@ -61,13 +61,13 @@ public class OrderPersistenceAdapter implements CreateOrderPort, DeleteOrderPort
         });
     }
 
-    public OrderNotCreated calculateDiscount(IncompleteOrder order, String customerName){
+    public OrderNotCreated calculateDiscount(IncompleteOrder order, Customer customer){
         Iterable<OrderJpaEntity> ordersJpa = orderRepository.findAll();
         List<Order> list = new ArrayList<>();
         ordersJpa.forEach(orderJpa -> list.add(orderMapper.mapToDomainEntity(orderJpa)));
         Integer count = 0;
         for(Order orderEntity: list){
-            if(orderEntity.getCustomer().getValue().equals(customerName)){
+            if(orderEntity.getCustomer().getValue().equals(customer.getValue())){
                 count++;
             }
         }
@@ -76,14 +76,14 @@ public class OrderPersistenceAdapter implements CreateOrderPort, DeleteOrderPort
             BigDecimal discount =  new BigDecimal(total.doubleValue() * 0.1);
             BigDecimal finalTotal = new BigDecimal(total.doubleValue() - discount.doubleValue());
             return new OrderNotCreated(
-                    Customer.of(customerName),
+                    customer,
                     Total.of(finalTotal),
                     Discount.of(discount),
                     order.getStatus()
             );
         }else {
             return new OrderNotCreated(
-                    Customer.of(customerName),
+                    customer,
                     order.getTotal(),
                     Discount.of(new BigDecimal(0)),
                     order.getStatus()

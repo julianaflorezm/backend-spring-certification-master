@@ -35,9 +35,9 @@ public class OrderController {
         Customer customer = Customer.of(customerName);
         Try<Boolean> hasPermission = createOrderUseCase.userHasPermission(authorities);
         if(hasPermission.get()){
-            return ResponseEntity.ok(createOrderUseCase.createOrder(command, customerName));
+            return ResponseEntity.ok(createOrderUseCase.createOrder(command, customer));
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Error:" + customer.getValue() + "unauthorized to do this action");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Try.failure(UserUnauthorized.of(customer)));
     }
 
     @DeleteMapping
@@ -56,30 +56,39 @@ public class OrderController {
     @GetMapping
     public ResponseEntity findOrder(@RequestBody FindOrderUseCase.FindOrderQuery query, Authentication authentication){
         Collection authorities = authentication.getAuthorities();
+        KeycloakPrincipal principal = (KeycloakPrincipal) authentication.getPrincipal();
+        String customerName = principal.getKeycloakSecurityContext().getToken().getPreferredUsername();
+        Customer customer = Customer.of(customerName);
         Try<Boolean> hasPermission = findOrderUseCase.userHasPermission(authorities);
         if(hasPermission.get()){
             return ResponseEntity.ok(findOrderUseCase.findOrder(query));
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Error: ser unauthorized to do this action");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Try.failure(UserUnauthorized.of(customer)));
     }
 
     @PutMapping
     public ResponseEntity updateOrder(@RequestBody UpdateOrderUseCase.UpdateOrderCommand command, Authentication authentication){
         Collection authorities = authentication.getAuthorities();
+        KeycloakPrincipal principal = (KeycloakPrincipal) authentication.getPrincipal();
+        String customerName = principal.getKeycloakSecurityContext().getToken().getPreferredUsername();
+        Customer customer = Customer.of(customerName);
         Try<Boolean> hasPermission = updateOrderUseCase.userHasPermission(authorities);
         if(hasPermission.get()){
             return ResponseEntity.ok(updateOrderUseCase.updateOrder(command));
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Error: user unauthorized to do this action");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(UserUnauthorized.of(customer));
     }
 
     @GetMapping("all")
     public ResponseEntity findAllOrders(Authentication authentication){
         Collection authorities = authentication.getAuthorities();
+        KeycloakPrincipal principal = (KeycloakPrincipal) authentication.getPrincipal();
+        String customerName = principal.getKeycloakSecurityContext().getToken().getPreferredUsername();
+        Customer customer = Customer.of(customerName);
         Try<Boolean> hasPermission = findAllOrdersUseCase.userHasPermission(authorities);
         if(hasPermission.get()){
             return ResponseEntity.ok(findAllOrdersUseCase.findAllOrders());
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Error: user unauthorized to do this action");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(UserUnauthorized.of(customer));
     }
 }

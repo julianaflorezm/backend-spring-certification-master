@@ -1,6 +1,7 @@
 package co.com.ias.certification.backend.order.application.service;
 
 import co.com.ias.certification.backend.common.UseCase;
+import co.com.ias.certification.backend.order.application.domain.Customer;
 import co.com.ias.certification.backend.order.application.port.in.CreateOrderUseCase;
 import co.com.ias.certification.backend.order.application.port.out.CreateOrderPort;
 import io.vavr.control.Try;
@@ -16,8 +17,8 @@ public class CreateOrderService implements CreateOrderUseCase {
     private final CreateOrderPort createOrderPort;
 
     @Override
-    public Try<List<Object>> createOrder(CreateOrderCommand command, String customerName) {
-        return createOrderPort.createOrder(command.getProducts(), command.getOrder(), customerName);
+    public Try<List<Object>> createOrder(CreateOrderCommand command, Customer customer) {
+        return createOrderPort.createOrder(command.getProducts(), command.getOrder(), customer);
     }
 
     @Override
