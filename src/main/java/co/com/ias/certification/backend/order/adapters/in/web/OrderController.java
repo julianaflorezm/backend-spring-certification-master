@@ -76,7 +76,7 @@ public class OrderController {
         if(hasPermission.get()){
             return ResponseEntity.ok(updateOrderUseCase.updateOrder(command));
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(UserUnauthorized.of(customer));
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Try.failure(UserUnauthorized.of(customer)));
     }
 
     @GetMapping("all")
@@ -89,6 +89,6 @@ public class OrderController {
         if(hasPermission.get()){
             return ResponseEntity.ok(findAllOrdersUseCase.findAllOrders());
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(UserUnauthorized.of(customer));
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Try.failure(UserUnauthorized.of(customer)));
     }
 }
